@@ -33,6 +33,20 @@ def detect_design(data: pd.DataFrame) -> DesignSpec:
             allows_scaled_abe=False,
         )
 
+    if n_periods == 3 and n_sequences == 3 and n_treatments == 2:
+        expected = {"TRR", "RTR", "RRT"}
+        observed = {str(seq).upper() for seq in sequences}
+        if observed == expected:
+            return DesignSpec(
+                name="2x2x3",
+                n_periods=3,
+                n_sequences=3,
+                n_treatments=2,
+                sequences=sorted(str(s).upper() for s in sequences),
+                is_replicate=True,
+                allows_scaled_abe=True,
+            )
+
     if n_periods == 4 and n_sequences == 2 and n_treatments == 2:
         expected = {"RTTR", "TRRT"}
         observed = {str(seq).upper() for seq in sequences}
@@ -60,6 +74,7 @@ def detect_design(data: pd.DataFrame) -> DesignSpec:
         )
 
     raise DesignError(
-        "Unsupported design for v0.1. Supported: standard 2x2 crossover and basic parallel detection."
+        "Unsupported design. Supported: 2x2, 2x2x3 (partial replicate TRR/RTR/RRT), "
+        "2x2x4 (full replicate RTTR/TRRT), and parallel."
     )
 
