@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from bioeqpy.anova import fit_anova
-from bioeqpy.core.constants import FDA_2001_STANDARD_BASIS, NTI_ACCEPTANCE, STANDARD_ACCEPTANCE
+from bioeqpy.core.constants import FDA_2001_STANDARD_BASIS, FDA_2011_RSABE_BASIS, EMA_2018_ABEL_BASIS, NTI_ACCEPTANCE, STANDARD_ACCEPTANCE
 from bioeqpy.core.types import BEResult
 from bioeqpy.diagnostics import check_assumptions
 from bioeqpy.io.loaders import infer_parameters, load_dataset, load_study
@@ -35,11 +35,22 @@ def analyze(
         anova_result = fit_anova(study)
         if method == "nti":
             from bioeqpy.tost.nti import compute_nti_ci
-
             ci_result = compute_nti_ci(anova_result, alpha=alpha)
+        elif method == "abel":
+            from bioeqpy.tost.rsabe import compute_abel_ci
+            ci_result = compute_abel_ci(anova_result, alpha=alpha)
+        elif method == "rsabe":
+            from bioeqpy.tost.rsabe import compute_rsabe_ci
+            ci_result = compute_rsabe_ci(anova_result, alpha=alpha)
         else:
             ci_result = compute_ci(anova_result, alpha=alpha, acceptance=acceptance, method=method)
         diagnostics = check_assumptions(study, anova_result)
+        basis_map = {
+            "nti": FDA_2001_STANDARD_BASIS,
+            "abel": EMA_2018_ABEL_BASIS,
+            "rsabe": FDA_2011_RSABE_BASIS,
+        }
+        regulatory_basis = basis_map.get(method, FDA_2001_STANDARD_BASIS)
         results.append(
             BEResult(
                 parameter_name=parameter,
@@ -50,7 +61,7 @@ def analyze(
                 ci=ci_result,
                 diagnostics=diagnostics,
                 conclusion="Bioequivalent" if ci_result.passed else "Not bioequivalent",
-                regulatory_basis=FDA_2001_STANDARD_BASIS,
+                regulatory_basis=regulatory_basis,
             )
         )
 

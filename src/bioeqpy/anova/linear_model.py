@@ -96,23 +96,28 @@ def fit_2x2x4_anova(study: BEStudy) -> ANOVAResult:
 
     treatment_diff = float(np.mean(subj_diffs))
 
-    # SE of treatment difference: sqrt(2 * pooled_MSW / n)
+    # SE of treatment difference: sqrt(pooled_MSW / n)
     pooled_MSW = (MSW_R + MSW_T) / 2.0
     n_subjects = len(subj_diffs)
     # For 2x2x4, df_residual = n - 2 (from within-subject contrasts)
     residual_df = float(n_subjects - 2)
     residual_ms = pooled_MSW
-    se_diff = float(np.sqrt(2.0 * pooled_MSW / n_subjects))
+    se_diff = float(np.sqrt(pooled_MSW / n_subjects))
+
+    # Treatment F-statistic, SS, and p-value for source table
+    treatment_f = (treatment_diff / se_diff) ** 2 if se_diff > 0 else 0.0
+    treatment_ss = treatment_f * pooled_MSW
+    treatment_p = float(stats.f.sf(treatment_f, 1, residual_df)) if se_diff > 0 else 1.0
 
     # Build a minimal source table
     source_table = pd.DataFrame([
         {
             "Source": "Treatment",
             "DF": 1,
-            "SS": np.nan,
-            "MS": np.nan,
-            "F": np.nan,
-            "p-value": np.nan,
+            "SS": treatment_ss,
+            "MS": treatment_ss,
+            "F": treatment_f,
+            "p-value": treatment_p,
         },
         {
             "Source": "Residual",
