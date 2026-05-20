@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #F8FAFC;
+      --surface:     #FFFFFF;
+      --surface-2:   #F1F5F9;
+      --border:      #E2E8F0;
+      --border-strong: #CBD5E1;
+
+      --blue-900:    #0F2D5B;
+      --blue-800:    #1A4B8C;
+      --blue-700:    #1D5AA8;
+      --blue-100:    #DBEAFE;
+      --blue-50:     #EFF6FF;
+
+      --green-700:   #15803D;
+      --green-600:   #16A34A;
+      --green-100:   #DCFCE7;
+      --green-50:    #F0FDF4;
+
+      --red-700:     #B91C1C;
+      --red-600:     #DC2626;
+      --red-100:     #FEE2E2;
+      --red-50:      #FFF1F2;
+
+      --amber-600:   #D97706;
+      --amber-50:    #FFFBEB;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+      --text-code:      #1E293B;
+
+      --font-sans:  'Inter', 'Helvetica Neue', -apple-system, sans-serif;
+      --font-mono:  'JetBrains Mono', 'Courier New', monospace;
+
+      --radius-sm: 4px;
+      --radius:    8px;
+      --radius-lg: 12px;
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    /* ─── Base ──────────────────────────────────────────────────────────── */
+    html { font-size: 14px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────────────── */
+    .page { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    /* ─── Header ────────────────────────────────────────────────────────── */
+    .report-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 28px 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark {
+      width: 42px; height: 42px;
+      background: var(--blue-800);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-mark svg { color: white; }
+    .brand-text .product {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--blue-800);
+    }
+    .brand-text .subtitle {
+      font-size: 12px; color: var(--text-muted); font-weight: 400;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .header-meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .header-meta .report-title {
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    /* ─── Decision Banner ───────────────────────────────────────────────── */
+    .decision-banner {
+      padding: 18px 28px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 16px;
+      border: 1px solid;
+    }
+    .decision-banner.pass {
+      background: var(--green-50);
+      border-color: #BBF7D0;
+    }
+    .decision-banner.fail {
+      background: var(--red-50);
+      border-color: #FECACA;
+    }
+    .decision-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .decision-banner.pass .decision-icon { background: var(--green-100); }
+    .decision-banner.fail .decision-icon { background: var(--red-100); }
+    .decision-verdict {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+    }
+    .decision-banner.pass .decision-verdict { color: var(--green-700); }
+    .decision-banner.fail .decision-verdict { color: var(--red-700); }
+    .decision-sub {
+      font-size: 13px; margin-top: 2px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Summary Table (top overview) ─────────────────────────────────── */
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header h2 {
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .card-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--blue-800);
+    }
+
+    /* ─── Tables ────────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--surface-2); }
+    thead th {
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border-strong);
+      white-space: nowrap;
+    }
+    thead th.right { text-align: right; }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+    tbody td {
+      padding: 9px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+    tbody td.mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-code);
+      text-align: right;
+    }
+    tbody td.label { font-weight: 500; }
+
+    /* ─── BE Badge ──────────────────────────────────────────────────────── */
+    .be-badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .be-badge.pass { background: var(--green-100); color: var(--green-700); }
+    .be-badge.fail { background: var(--red-100); color: var(--red-700); }
+
+    /* ─── CI inline display ─────────────────────────────────────────────── */
+    .ci-value { font-family: var(--font-mono); font-size: 12px; }
+    .ci-range { color: var(--text-secondary); }
+
+    /* ─── Parameter Section ─────────────────────────────────────────────── */
+    .param-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .param-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 2px solid var(--blue-800);
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-800) 100%);
+    }
+    .param-name {
+      font-size: 17px; font-weight: 700; letter-spacing: -0.02em;
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+    }
+    .param-meta {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .param-pill {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 0.03em;
+    }
+    .param-body { padding: 20px 24px; }
+
+    /* ─── Forest Plot Container ─────────────────────────────────────────── */
+    .forest-container {
+      padding: 16px 20px;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+    .forest-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    .forest-svg-wrap { overflow-x: auto; }
+
+    /* ─── Subsection ─────────────────────────────────────────────────────── */
+    .subsection { margin-bottom: 20px; }
+    .subsection:last-child { margin-bottom: 0; }
+    .subsection-title {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .subsection-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ─── ANOVA table specifics ─────────────────────────────────────────── */
+    .anova-source { font-weight: 500; font-size: 13px; }
+    .anova-source.highlight { color: var(--blue-800); font-weight: 600; }
+
+    /* ─── Diagnostics ───────────────────────────────────────────────────── */
+    .diag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .diag-card {
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .diag-card-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .diag-card-value {
+      font-family: var(--font-mono);
+      font-size: 15px; font-weight: 600; color: var(--text-primary);
+    }
+    .diag-card-sub {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+    .warn-list { margin-top: 10px; }
+    .warn-item {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 8px 12px;
+      background: var(--amber-50);
+      border: 1px solid #FDE68A;
+      border-radius: var(--radius-sm);
+      font-size: 12px; color: #92400E;
+      margin-bottom: 6px;
+    }
+    .warn-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+    /* ─── Footer ────────────────────────────────────────────────────────── */
+    .report-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-start;
+      font-size: 11px; color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .footer-reg { max-width: 60%; }
+    .footer-info { text-align: right; }
+    .footer-version {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--blue-800); font-weight: 600;
+    }
+
+    /* ─── Print ─────────────────────────────────────────────────────────── */
+    @media print {
+      body { background: white; font-size: 11pt; }
+      .page { padding: 0; max-width: none; }
+      .param-section { page-break-inside: avoid; box-shadow: none; }
+      .report-header { box-shadow: none; }
+      .param-header {
+        background: #1A4B8C !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+      .decision-banner.pass {
+        background: #F0FDF4 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+      .decision-banner.fail {
+        background: #FFF1F2 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="report-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="product">BioEqPy</div>
+        <div class="subtitle">Bioequivalence Statistics</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="report-title">{{ title }}</div>
+      <div>Generated: {{ generated_at }}</div>
+      <div>Parameters analysed: {{ n_parameters }}</div>
+      <div>Version: {{ version }}</div>
+    </div>
+  </header>
+
+  <!-- ── Decision Banner ─────────────────────────────────────────────────── -->
+  <div class="decision-banner {{ 'pass' if all_passed else 'fail' }}">
+    <div class="decision-icon">
+      {% if all_passed %}
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      {% else %}
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      {% endif %}
+    </div>
+    <div>
+      <div class="decision-verdict">
+        {% if all_passed %}BIOEQUIVALENT{% else %}NOT BIOEQUIVALENT{% endif %}
+      </div>
+      <div class="decision-sub">
+        All {{ n_parameters }} PK parameter{% if n_parameters > 1 %}s{% endif %}
+        {% if all_passed %}satisfy{% else %}do not all satisfy{% endif %}
+        the 90% CI criterion: {{ results[0].acceptance_lower }}–{{ results[0].acceptance_upper }}%
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Summary Overview Table ──────────────────────────────────────────── -->
+  <div class="summary-card">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <h2>Bioequivalence Assessment Summary</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th class="right">N</th>
+          <th class="right">GMR %</th>
+          <th class="right">90% Confidence Interval</th>
+          <th class="right">Acceptance Limits</th>
+          <th>Decision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td class="label mono">{{ r.parameter_name }}</td>
+          <td class="mono">{{ r.n_subjects }}</td>
+          <td class="mono">{{ r.point_estimate }}</td>
+          <td class="mono">{{ r.ci_lower }}–{{ r.ci_upper }}</td>
+          <td class="mono">{{ r.acceptance_lower }}–{{ r.acceptance_upper }}</td>
+          <td>
+            <span class="be-badge {{ 'pass' if r.passed else 'fail' }}">
+              {{ 'BE' if r.passed else 'Not BE' }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Per-Parameter Sections ──────────────────────────────────────────── -->
+  {% for r in results %}
+  <div class="param-section">
+
+    <div class="param-header">
+      <span class="param-name">{{ r.parameter_name }}</span>
+      <div class="param-meta">
+        <span class="param-pill">n = {{ r.n_subjects }}</span>
+        <span class="param-pill">{{ r.design_name }} Crossover</span>
+        <span class="param-pill">{{ r.sequences | join(' / ') }}</span>
+        <span class="be-badge {{ 'pass' if r.passed else 'fail' }}" style="font-size:12px;padding:3px 12px;">
+          {{ 'BIOEQUIVALENT' if r.passed else 'NOT BIOEQUIVALENT' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="param-body">
+
+      <!-- Forest Plot -->
+      <div class="forest-container">
+        <div class="forest-label">90% Confidence Interval on Geometric Mean Ratio</div>
+        <div class="forest-svg-wrap">{{ r.forest_svg | safe }}</div>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div class="subsection">
+        <div class="subsection-title">Descriptive Statistics</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {% for col in r.summary_rows[0].keys() %}
+                <th {% if not loop.first %}class="right"{% endif %}>{{ col }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in r.summary_rows %}
+              <tr>
+                {% for col, val in row.items() %}
+                <td {% if loop.first %}class="label"{% else %}class="mono"{% endif %}>
+                  {% if loop.first %}{{ val }}{% else %}{{ val | fmt_float(2) }}{% endif %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANOVA Source Table -->
+      <div class="subsection">
+        <div class="subsection-title">Analysis of Variance — Log-Transformed Values</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th class="right">df</th>
+                <th class="right">SS</th>
+                <th class="right">MS</th>
+                <th class="right">F</th>
+                <th class="right">p-value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in r.anova_rows %}
+              {% set is_treatment = (row['Source'] == 'Treatment') %}
+              <tr {% if is_treatment %}style="background:var(--blue-50);"{% endif %}>
+                <td class="anova-source {{ 'highlight' if is_treatment else '' }}">
+                  {{ row['Source'] }}
+                </td>
+                <td class="mono">{{ row['DF'] | int }}</td>
+                <td class="mono">{{ row['SS'] | fmt_ss }}</td>
+                <td class="mono">{{ row['MS'] | fmt_ss }}</td>
+                <td class="mono">{{ row['F'] | fmt_float(3) }}</td>
+                <td class="mono">{{ row['p-value'] | fmt_pval }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;padding-left:2px;">
+          Sequence F-ratio tested against Subject-within-Sequence MS — split-plot denominator.
+          Period and Treatment F-ratios tested against Residual MS.
+        </div>
+      </div>
+
+      <!-- Diagnostics -->
+      <div class="subsection">
+        <div class="subsection-title">Diagnostics</div>
+        <div class="diag-grid">
+          <div class="diag-card">
+            <div class="diag-card-label">Residual df</div>
+            <div class="diag-card-value">{{ r.residual_df }}</div>
+            <div class="diag-card-sub">Within-subject error degrees of freedom</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Residual MS</div>
+            <div class="diag-card-value mono" style="font-size:13px;">{{ r.residual_ms | fmt_ss }}</div>
+            <div class="diag-card-sub">Within-subject mean square — σ² estimate</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Shapiro-Wilk p</div>
+            {% if r.normality_p is not none %}
+            <div class="diag-card-value" style="color:{% if r.normality_p < 0.05 %}var(--amber-600){% else %}var(--green-600){% endif %};">
+              {{ r.normality_p | fmt_pval }}
+            </div>
+            <div class="diag-card-sub">Residual normality test {% if r.normality_p < 0.05 %}— significant{% else %}— no evidence against normality{% endif %}</div>
+            {% else %}
+            <div class="diag-card-value" style="color:var(--text-muted);">N/A</div>
+            <div class="diag-card-sub">Insufficient residuals</div>
+            {% endif %}
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Potential Outliers</div>
+            <div class="diag-card-value" style="color:{% if r.outliers | length > 0 %}var(--amber-600){% else %}var(--green-600){% endif %};">
+              {{ r.outliers | length }}
+            </div>
+            <div class="diag-card-sub">Residuals with |z| &gt; 3.0</div>
+          </div>
+        </div>
+        {% if r.warnings %}
+        <div class="warn-list">
+          {% for w in r.warnings %}
+          <div class="warn-item">
+            <span class="warn-icon">&#9888;</span>
+            <span>{{ w }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Visual Diagnostics -->
+      <div class="subsection">
+        <div class="subsection-title">Visual Diagnostics</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div>
+            <div class="forest-label" style="margin-bottom:8px;">Power Curve — Estimated from Study CV</div>
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow-x:auto;">
+              {{ r.power_svg | safe }}
+            </div>
+          </div>
+          <div>
+            <div class="forest-label" style="margin-bottom:8px;">Normal Q-Q — Model Residuals</div>
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow-x:auto;">
+              {{ r.qq_svg | safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /param-body -->
+  </div><!-- /param-section -->
+  {% endfor %}
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="report-footer">
+    <div class="footer-reg">
+      <strong>Regulatory Basis:</strong> {{ results[0].regulatory_basis }}<br>
+      90% confidence interval on the geometric mean ratio, Test to Reference,
+      must lie within {{ results[0].acceptance_lower }}–{{ results[0].acceptance_upper }}%
+      for bioequivalence to be concluded per FDA 2001 guidance and EMA/CPMP/EWP/QWP/1401/98 Rev.1, 2010.
+    </div>
+    <div class="footer-info">
+      <div class="footer-version">BioEqPy v{{ version }}</div>
+      <div>Generated {{ generated_at }}</div>
+      <div style="margin-top:4px;color:#CBD5E1;">
+        This report is for informational purposes only.<br>
+        Regulatory submission requires validated software and full audit trail.
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

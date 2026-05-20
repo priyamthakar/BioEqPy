@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bioequivalence Statistical Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ─── Reset & Variables ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #F8FAFC;
+      --surface:     #FFFFFF;
+      --surface-2:   #F1F5F9;
+      --border:      #E2E8F0;
+      --border-strong: #CBD5E1;
+
+      --blue-900:    #0F2D5B;
+      --blue-800:    #1A4B8C;
+      --blue-700:    #1D5AA8;
+      --blue-100:    #DBEAFE;
+      --blue-50:     #EFF6FF;
+
+      --green-700:   #15803D;
+      --green-600:   #16A34A;
+      --green-100:   #DCFCE7;
+      --green-50:    #F0FDF4;
+
+      --red-700:     #B91C1C;
+      --red-600:     #DC2626;
+      --red-100:     #FEE2E2;
+      --red-50:      #FFF1F2;
+
+      --amber-600:   #D97706;
+      --amber-50:    #FFFBEB;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+      --text-code:      #1E293B;
+
+      --font-sans:  'Inter', 'Helvetica Neue', -apple-system, sans-serif;
+      --font-mono:  'JetBrains Mono', 'Courier New', monospace;
+
+      --radius-sm: 4px;
+      --radius:    8px;
+      --radius-lg: 12px;
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+
+    /* ─── Base ──────────────────────────────────────────────────────────── */
+    html { font-size: 14px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────────────── */
+    .page { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    /* ─── Header ────────────────────────────────────────────────────────── */
+    .report-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 28px 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark {
+      width: 42px; height: 42px;
+      background: var(--blue-800);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-mark svg { color: white; }
+    .brand-text .product {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--blue-800);
+    }
+    .brand-text .subtitle {
+      font-size: 12px; color: var(--text-muted); font-weight: 400;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .header-meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .header-meta .report-title {
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    /* ─── Decision Banner ───────────────────────────────────────────────── */
+    .decision-banner {
+      padding: 18px 28px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 16px;
+      border: 1px solid;
+    }
+    .decision-banner.pass {
+      background: var(--green-50);
+      border-color: #BBF7D0;
+    }
+    .decision-banner.fail {
+      background: var(--red-50);
+      border-color: #FECACA;
+    }
+    .decision-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .decision-banner.pass .decision-icon { background: var(--green-100); }
+    .decision-banner.fail .decision-icon { background: var(--red-100); }
+    .decision-verdict {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+    }
+    .decision-banner.pass .decision-verdict { color: var(--green-700); }
+    .decision-banner.fail .decision-verdict { color: var(--red-700); }
+    .decision-sub {
+      font-size: 13px; margin-top: 2px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Summary Table (top overview) ─────────────────────────────────── */
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header h2 {
+      font-size: 13px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .card-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--blue-800);
+    }
+
+    /* ─── Tables ────────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--surface-2); }
+    thead th {
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border-strong);
+      white-space: nowrap;
+    }
+    thead th.right { text-align: right; }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+    tbody td {
+      padding: 9px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+    tbody td.mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-code);
+      text-align: right;
+    }
+    tbody td.label { font-weight: 500; }
+
+    /* ─── BE Badge ──────────────────────────────────────────────────────── */
+    .be-badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .be-badge.pass { background: var(--green-100); color: var(--green-700); }
+    .be-badge.fail { background: var(--red-100); color: var(--red-700); }
+
+    /* ─── CI inline display ─────────────────────────────────────────────── */
+    .ci-value { font-family: var(--font-mono); font-size: 12px; }
+    .ci-range { color: var(--text-secondary); }
+
+    /* ─── Parameter Section ─────────────────────────────────────────────── */
+    .param-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .param-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 2px solid var(--blue-800);
+      background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-800) 100%);
+    }
+    .param-name {
+      font-size: 17px; font-weight: 700; letter-spacing: -0.02em;
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+    }
+    .param-meta {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .param-pill {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 0.03em;
+    }
+    .param-body { padding: 20px 24px; }
+
+    /* ─── Forest Plot Container ─────────────────────────────────────────── */
+    .forest-container {
+      padding: 16px 20px;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+    .forest-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    .forest-svg-wrap { overflow-x: auto; }
+
+    /* ─── Subsection ─────────────────────────────────────────────────────── */
+    .subsection { margin-bottom: 20px; }
+    .subsection:last-child { margin-bottom: 0; }
+    .subsection-title {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .subsection-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ─── ANOVA table specifics ─────────────────────────────────────────── */
+    .anova-source { font-weight: 500; font-size: 13px; }
+    .anova-source.highlight { color: var(--blue-800); font-weight: 600; }
+
+    /* ─── Diagnostics ───────────────────────────────────────────────────── */
+    .diag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .diag-card {
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .diag-card-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .diag-card-value {
+      font-family: var(--font-mono);
+      font-size: 15px; font-weight: 600; color: var(--text-primary);
+    }
+    .diag-card-sub {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+    .warn-list { margin-top: 10px; }
+    .warn-item {
+      display: flex; gap: 8px; align-items: flex-start;
+      padding: 8px 12px;
+      background: var(--amber-50);
+      border: 1px solid #FDE68A;
+      border-radius: var(--radius-sm);
+      font-size: 12px; color: #92400E;
+      margin-bottom: 6px;
+    }
+    .warn-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+    /* ─── Footer ────────────────────────────────────────────────────────── */
+    .report-footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-start;
+      font-size: 11px; color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .footer-reg { max-width: 60%; }
+    .footer-info { text-align: right; }
+    .footer-version {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--blue-800); font-weight: 600;
+    }
+
+    /* ─── Print ─────────────────────────────────────────────────────────── */
+    @media print {
+      body { background: white; font-size: 11pt; }
+      .page { padding: 0; max-width: none; }
+      .param-section { page-break-inside: avoid; box-shadow: none; }
+      .report-header { box-shadow: none; }
+      .param-header {
+        background: #1A4B8C !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+      .decision-banner.pass {
+        background: #F0FDF4 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+      .decision-banner.fail {
+        background: #FFF1F2 !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="report-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="product">BioEqPy</div>
+        <div class="subtitle">Bioequivalence Statistics</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="report-title">Bioequivalence Statistical Report</div>
+      <div>Generated: 2026-05-20 12:41:03 UTC</div>
+      <div>Parameters analysed: 3</div>
+      <div>Version: 0.1.0</div>
+    </div>
+  </header>
+
+  <!-- ── Decision Banner ─────────────────────────────────────────────────── -->
+  <div class="decision-banner pass">
+    <div class="decision-icon">
+      
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      
+    </div>
+    <div>
+      <div class="decision-verdict">
+        BIOEQUIVALENT
+      </div>
+      <div class="decision-sub">
+        All 3 PK parameters
+        satisfy
+        the 90% CI criterion (80.0–125.0%)
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Summary Overview Table ──────────────────────────────────────────── -->
+  <div class="summary-card">
+    <div class="card-header">
+      <div class="card-dot"></div>
+      <h2>Bioequivalence Assessment Summary</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th class="right">N</th>
+          <th class="right">GMR (%)</th>
+          <th class="right">90% Confidence Interval</th>
+          <th class="right">Acceptance Limits</th>
+          <th>Decision</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="label mono">AUClast</td>
+          <td class="mono">8</td>
+          <td class="mono">102.02</td>
+          <td class="mono">100.57–103.49</td>
+          <td class="mono">80.0–125.0</td>
+          <td>
+            <span class="be-badge pass">
+              BE
+            </span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="label mono">AUCinf</td>
+          <td class="mono">8</td>
+          <td class="mono">102.02</td>
+          <td class="mono">100.73–103.34</td>
+          <td class="mono">80.0–125.0</td>
+          <td>
+            <span class="be-badge pass">
+              BE
+            </span>
+          </td>
+        </tr>
+        
+        <tr>
+          <td class="label mono">Cmax</td>
+          <td class="mono">8</td>
+          <td class="mono">99.35</td>
+          <td class="mono">97.57–101.16</td>
+          <td class="mono">80.0–125.0</td>
+          <td>
+            <span class="be-badge pass">
+              BE
+            </span>
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Per-Parameter Sections ──────────────────────────────────────────── -->
+  
+  <div class="param-section">
+
+    <div class="param-header">
+      <span class="param-name">AUClast</span>
+      <div class="param-meta">
+        <span class="param-pill">n = 8</span>
+        <span class="param-pill">2x2 Crossover</span>
+        <span class="param-pill">RT / TR</span>
+        <span class="be-badge pass" style="font-size:12px;padding:3px 12px;">
+          BIOEQUIVALENT
+        </span>
+      </div>
+    </div>
+
+    <div class="param-body">
+
+      <!-- Forest Plot -->
+      <div class="forest-container">
+        <div class="forest-label">90% Confidence Interval on Geometric Mean Ratio</div>
+        <div class="forest-svg-wrap"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 88" width="560" height="88" style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9.5px;display:block;max-width:100%;">
+<rect x="96.2" y="6" width="330.8" height="52" fill="#EFF6FF" rx="2"/>
+<line x1="96.2" y1="6" x2="96.2" y2="58" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="427.0" y1="6" x2="427.0" y2="58" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="243.2" y1="6" x2="243.2" y2="58" stroke="#94A3B8" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.5"/>
+<line x1="8" y1="54" x2="552" y2="54" stroke="#CBD5E1" stroke-width="0.75"/>
+<line x1="22.7" y1="54" x2="22.7" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="22.7" y="69" text-anchor="middle" fill="#475569" font-weight="400">70</text>
+<line x1="96.2" y1="54" x2="96.2" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="96.2" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">80</text>
+<line x1="169.7" y1="54" x2="169.7" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="169.7" y="69" text-anchor="middle" fill="#475569" font-weight="400">90</text>
+<line x1="243.2" y1="54" x2="243.2" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="243.2" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">100</text>
+<line x1="316.8" y1="54" x2="316.8" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="316.8" y="69" text-anchor="middle" fill="#475569" font-weight="400">110</text>
+<line x1="390.3" y1="54" x2="390.3" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="390.3" y="69" text-anchor="middle" fill="#475569" font-weight="400">120</text>
+<line x1="427.0" y1="54" x2="427.0" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="427.0" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">125</text>
+<line x1="463.8" y1="54" x2="463.8" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="463.8" y="69" text-anchor="middle" fill="#475569" font-weight="400">130</text>
+<line x1="537.3" y1="54" x2="537.3" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="537.3" y="69" text-anchor="middle" fill="#475569" font-weight="400">140</text>
+<line x1="247.5" y1="54" x2="268.9" y2="54" stroke="#16A34A" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>
+<line x1="247.5" y1="44" x2="247.5" y2="64" stroke="#16A34A" stroke-width="2"/>
+<line x1="268.9" y1="44" x2="268.9" y2="64" stroke="#16A34A" stroke-width="2"/>
+<polygon points="258.1,47 265.1,54 258.1,61 251.1,54" fill="#16A34A"/>
+<text x="258.2" y="17" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11px">102.02%  [100.57 – 103.49]</text>
+<text x="96.2" y="86" text-anchor="middle" fill="#94A3B8" font-size="8.5px">80%</text>
+<text x="427.0" y="86" text-anchor="middle" fill="#94A3B8" font-size="8.5px">125%</text>
+</svg></div>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div class="subsection">
+        <div class="subsection-title">Descriptive Statistics</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                
+                <th >Treatment</th>
+                
+                <th class="right">N</th>
+                
+                <th class="right">Arithmetic Mean</th>
+                
+                <th class="right">SD</th>
+                
+                <th class="right">CV%</th>
+                
+                <th class="right">Geometric Mean</th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                
+                <td class="label">
+                  R
+                </td>
+                
+                <td class="mono">
+                  8.00
+                </td>
+                
+                <td class="mono">
+                  106.75
+                </td>
+                
+                <td class="mono">
+                  14.41
+                </td>
+                
+                <td class="mono">
+                  13.50
+                </td>
+                
+                <td class="mono">
+                  105.92
+                </td>
+                
+              </tr>
+              
+              <tr>
+                
+                <td class="label">
+                  T
+                </td>
+                
+                <td class="mono">
+                  8.00
+                </td>
+                
+                <td class="mono">
+                  108.75
+                </td>
+                
+                <td class="mono">
+                  13.08
+                </td>
+                
+                <td class="mono">
+                  12.03
+                </td>
+                
+                <td class="mono">
+                  108.06
+                </td>
+                
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANOVA Source Table -->
+      <div class="subsection">
+        <div class="subsection-title">Analysis of Variance (Log-Transformed Values)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th class="right">df</th>
+                <th class="right">SS</th>
+                <th class="right">MS</th>
+                <th class="right">F</th>
+                <th class="right">p-value</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Sequence
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.16330</td>
+                <td class="mono">0.16330</td>
+                <td class="mono">15.947</td>
+                <td class="mono">0.0072</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Subject(Sequence)
+                </td>
+                <td class="mono">6</td>
+                <td class="mono">0.06144</td>
+                <td class="mono">0.01024</td>
+                <td class="mono">47.505</td>
+                <td class="mono">&lt;0.001</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Period
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.000259</td>
+                <td class="mono">0.000259</td>
+                <td class="mono">1.200</td>
+                <td class="mono">0.3153</td>
+              </tr>
+              
+              
+              <tr style="background:var(--blue-50);">
+                <td class="anova-source highlight">
+                  Treatment
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.00160</td>
+                <td class="mono">0.00160</td>
+                <td class="mono">7.417</td>
+                <td class="mono">0.0345</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Residual
+                </td>
+                <td class="mono">6</td>
+                <td class="mono">0.00129</td>
+                <td class="mono">0.000216</td>
+                <td class="mono">—</td>
+                <td class="mono">—</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;padding-left:2px;">
+          Sequence F-ratio tested against Subject(Sequence) MS (split-plot structure).
+          Period and Treatment F-ratios tested against Residual MS.
+        </div>
+      </div>
+
+      <!-- Diagnostics -->
+      <div class="subsection">
+        <div class="subsection-title">Diagnostics</div>
+        <div class="diag-grid">
+          <div class="diag-card">
+            <div class="diag-card-label">Residual df</div>
+            <div class="diag-card-value">6</div>
+            <div class="diag-card-sub">Within-subject error degrees of freedom</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Residual MS</div>
+            <div class="diag-card-value mono" style="font-size:13px;">0.000216</div>
+            <div class="diag-card-sub">Within-subject mean square (σ² estimate)</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Shapiro-Wilk p</div>
+            
+            <div class="diag-card-value" style="color:var(--green-600);">
+              0.9996
+            </div>
+            <div class="diag-card-sub">Residual normality test — no evidence against normality</div>
+            
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Potential Outliers</div>
+            <div class="diag-card-value" style="color:var(--green-600);">
+              0
+            </div>
+            <div class="diag-card-sub">Residuals with |z| &gt; 3.0</div>
+          </div>
+        </div>
+        
+      </div>
+
+    </div><!-- /param-body -->
+  </div><!-- /param-section -->
+  
+  <div class="param-section">
+
+    <div class="param-header">
+      <span class="param-name">AUCinf</span>
+      <div class="param-meta">
+        <span class="param-pill">n = 8</span>
+        <span class="param-pill">2x2 Crossover</span>
+        <span class="param-pill">RT / TR</span>
+        <span class="be-badge pass" style="font-size:12px;padding:3px 12px;">
+          BIOEQUIVALENT
+        </span>
+      </div>
+    </div>
+
+    <div class="param-body">
+
+      <!-- Forest Plot -->
+      <div class="forest-container">
+        <div class="forest-label">90% Confidence Interval on Geometric Mean Ratio</div>
+        <div class="forest-svg-wrap"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 88" width="560" height="88" style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9.5px;display:block;max-width:100%;">
+<rect x="96.2" y="6" width="330.8" height="52" fill="#EFF6FF" rx="2"/>
+<line x1="96.2" y1="6" x2="96.2" y2="58" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="427.0" y1="6" x2="427.0" y2="58" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="243.2" y1="6" x2="243.2" y2="58" stroke="#94A3B8" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.5"/>
+<line x1="8" y1="54" x2="552" y2="54" stroke="#CBD5E1" stroke-width="0.75"/>
+<line x1="22.7" y1="54" x2="22.7" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="22.7" y="69" text-anchor="middle" fill="#475569" font-weight="400">70</text>
+<line x1="96.2" y1="54" x2="96.2" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="96.2" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">80</text>
+<line x1="169.7" y1="54" x2="169.7" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="169.7" y="69" text-anchor="middle" fill="#475569" font-weight="400">90</text>
+<line x1="243.2" y1="54" x2="243.2" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="243.2" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">100</text>
+<line x1="316.8" y1="54" x2="316.8" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="316.8" y="69" text-anchor="middle" fill="#475569" font-weight="400">110</text>
+<line x1="390.3" y1="54" x2="390.3" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="390.3" y="69" text-anchor="middle" fill="#475569" font-weight="400">120</text>
+<line x1="427.0" y1="54" x2="427.0" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="427.0" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">125</text>
+<line x1="463.8" y1="54" x2="463.8" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="463.8" y="69" text-anchor="middle" fill="#475569" font-weight="400">130</text>
+<line x1="537.3" y1="54" x2="537.3" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="537.3" y="69" text-anchor="middle" fill="#475569" font-weight="400">140</text>
+<line x1="248.6" y1="54" x2="267.8" y2="54" stroke="#16A34A" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>
+<line x1="248.6" y1="44" x2="248.6" y2="64" stroke="#16A34A" stroke-width="2"/>
+<line x1="267.8" y1="44" x2="267.8" y2="64" stroke="#16A34A" stroke-width="2"/>
+<polygon points="258.1,47 265.1,54 258.1,61 251.1,54" fill="#16A34A"/>
+<text x="258.2" y="17" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11px">102.02%  [100.73 – 103.34]</text>
+<text x="96.2" y="86" text-anchor="middle" fill="#94A3B8" font-size="8.5px">80%</text>
+<text x="427.0" y="86" text-anchor="middle" fill="#94A3B8" font-size="8.5px">125%</text>
+</svg></div>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div class="subsection">
+        <div class="subsection-title">Descriptive Statistics</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                
+                <th >Treatment</th>
+                
+                <th class="right">N</th>
+                
+                <th class="right">Arithmetic Mean</th>
+                
+                <th class="right">SD</th>
+                
+                <th class="right">CV%</th>
+                
+                <th class="right">Geometric Mean</th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                
+                <td class="label">
+                  R
+                </td>
+                
+                <td class="mono">
+                  8.00
+                </td>
+                
+                <td class="mono">
+                  111.62
+                </td>
+                
+                <td class="mono">
+                  15.01
+                </td>
+                
+                <td class="mono">
+                  13.45
+                </td>
+                
+                <td class="mono">
+                  110.76
+                </td>
+                
+              </tr>
+              
+              <tr>
+                
+                <td class="label">
+                  T
+                </td>
+                
+                <td class="mono">
+                  8.00
+                </td>
+                
+                <td class="mono">
+                  113.75
+                </td>
+                
+                <td class="mono">
+                  13.92
+                </td>
+                
+                <td class="mono">
+                  12.23
+                </td>
+                
+                <td class="mono">
+                  113.01
+                </td>
+                
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANOVA Source Table -->
+      <div class="subsection">
+        <div class="subsection-title">Analysis of Variance (Log-Transformed Values)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th class="right">df</th>
+                <th class="right">SS</th>
+                <th class="right">MS</th>
+                <th class="right">F</th>
+                <th class="right">p-value</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Sequence
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.15753</td>
+                <td class="mono">0.15753</td>
+                <td class="mono">13.770</td>
+                <td class="mono">0.0100</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Subject(Sequence)
+                </td>
+                <td class="mono">6</td>
+                <td class="mono">0.06864</td>
+                <td class="mono">0.01144</td>
+                <td class="mono">65.832</td>
+                <td class="mono">&lt;0.001</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Period
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.000323</td>
+                <td class="mono">0.000323</td>
+                <td class="mono">1.859</td>
+                <td class="mono">0.2217</td>
+              </tr>
+              
+              
+              <tr style="background:var(--blue-50);">
+                <td class="anova-source highlight">
+                  Treatment
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.00161</td>
+                <td class="mono">0.00161</td>
+                <td class="mono">9.247</td>
+                <td class="mono">0.0228</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Residual
+                </td>
+                <td class="mono">6</td>
+                <td class="mono">0.00104</td>
+                <td class="mono">0.000174</td>
+                <td class="mono">—</td>
+                <td class="mono">—</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;padding-left:2px;">
+          Sequence F-ratio tested against Subject(Sequence) MS (split-plot structure).
+          Period and Treatment F-ratios tested against Residual MS.
+        </div>
+      </div>
+
+      <!-- Diagnostics -->
+      <div class="subsection">
+        <div class="subsection-title">Diagnostics</div>
+        <div class="diag-grid">
+          <div class="diag-card">
+            <div class="diag-card-label">Residual df</div>
+            <div class="diag-card-value">6</div>
+            <div class="diag-card-sub">Within-subject error degrees of freedom</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Residual MS</div>
+            <div class="diag-card-value mono" style="font-size:13px;">0.000174</div>
+            <div class="diag-card-sub">Within-subject mean square (σ² estimate)</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Shapiro-Wilk p</div>
+            
+            <div class="diag-card-value" style="color:var(--green-600);">
+              0.7965
+            </div>
+            <div class="diag-card-sub">Residual normality test — no evidence against normality</div>
+            
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Potential Outliers</div>
+            <div class="diag-card-value" style="color:var(--green-600);">
+              0
+            </div>
+            <div class="diag-card-sub">Residuals with |z| &gt; 3.0</div>
+          </div>
+        </div>
+        
+      </div>
+
+    </div><!-- /param-body -->
+  </div><!-- /param-section -->
+  
+  <div class="param-section">
+
+    <div class="param-header">
+      <span class="param-name">Cmax</span>
+      <div class="param-meta">
+        <span class="param-pill">n = 8</span>
+        <span class="param-pill">2x2 Crossover</span>
+        <span class="param-pill">RT / TR</span>
+        <span class="be-badge pass" style="font-size:12px;padding:3px 12px;">
+          BIOEQUIVALENT
+        </span>
+      </div>
+    </div>
+
+    <div class="param-body">
+
+      <!-- Forest Plot -->
+      <div class="forest-container">
+        <div class="forest-label">90% Confidence Interval on Geometric Mean Ratio</div>
+        <div class="forest-svg-wrap"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 88" width="560" height="88" style="font-family:'JetBrains Mono','Courier New',monospace;font-size:9.5px;display:block;max-width:100%;">
+<rect x="96.2" y="6" width="330.8" height="52" fill="#EFF6FF" rx="2"/>
+<line x1="96.2" y1="6" x2="96.2" y2="58" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="427.0" y1="6" x2="427.0" y2="58" stroke="#94A3B8" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="243.2" y1="6" x2="243.2" y2="58" stroke="#94A3B8" stroke-width="0.8" stroke-dasharray="5,4" opacity="0.5"/>
+<line x1="8" y1="54" x2="552" y2="54" stroke="#CBD5E1" stroke-width="0.75"/>
+<line x1="22.7" y1="54" x2="22.7" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="22.7" y="69" text-anchor="middle" fill="#475569" font-weight="400">70</text>
+<line x1="96.2" y1="54" x2="96.2" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="96.2" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">80</text>
+<line x1="169.7" y1="54" x2="169.7" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="169.7" y="69" text-anchor="middle" fill="#475569" font-weight="400">90</text>
+<line x1="243.2" y1="54" x2="243.2" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="243.2" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">100</text>
+<line x1="316.8" y1="54" x2="316.8" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="316.8" y="69" text-anchor="middle" fill="#475569" font-weight="400">110</text>
+<line x1="390.3" y1="54" x2="390.3" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="390.3" y="69" text-anchor="middle" fill="#475569" font-weight="400">120</text>
+<line x1="427.0" y1="54" x2="427.0" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="427.0" y="69" text-anchor="middle" fill="#1A4B8C" font-weight="600">125</text>
+<line x1="463.8" y1="54" x2="463.8" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="463.8" y="69" text-anchor="middle" fill="#475569" font-weight="400">130</text>
+<line x1="537.3" y1="54" x2="537.3" y2="58" stroke="#CBD5E1" stroke-width="1"/>
+<text x="537.3" y="69" text-anchor="middle" fill="#475569" font-weight="400">140</text>
+<line x1="225.4" y1="54" x2="251.8" y2="54" stroke="#16A34A" stroke-width="3.5" stroke-linecap="round" opacity="0.9"/>
+<line x1="225.4" y1="44" x2="225.4" y2="64" stroke="#16A34A" stroke-width="2"/>
+<line x1="251.8" y1="44" x2="251.8" y2="64" stroke="#16A34A" stroke-width="2"/>
+<polygon points="238.5,47 245.5,54 238.5,61 231.5,54" fill="#16A34A"/>
+<text x="238.6" y="17" text-anchor="middle" fill="#16A34A" font-weight="700" font-size="11px">99.35%  [97.57 – 101.16]</text>
+<text x="96.2" y="86" text-anchor="middle" fill="#94A3B8" font-size="8.5px">80%</text>
+<text x="427.0" y="86" text-anchor="middle" fill="#94A3B8" font-size="8.5px">125%</text>
+</svg></div>
+      </div>
+
+      <!-- Summary Statistics -->
+      <div class="subsection">
+        <div class="subsection-title">Descriptive Statistics</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                
+                <th >Treatment</th>
+                
+                <th class="right">N</th>
+                
+                <th class="right">Arithmetic Mean</th>
+                
+                <th class="right">SD</th>
+                
+                <th class="right">CV%</th>
+                
+                <th class="right">Geometric Mean</th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                
+                <td class="label">
+                  R
+                </td>
+                
+                <td class="mono">
+                  8.00
+                </td>
+                
+                <td class="mono">
+                  51.62
+                </td>
+                
+                <td class="mono">
+                  9.10
+                </td>
+                
+                <td class="mono">
+                  17.63
+                </td>
+                
+                <td class="mono">
+                  50.94
+                </td>
+                
+              </tr>
+              
+              <tr>
+                
+                <td class="label">
+                  T
+                </td>
+                
+                <td class="mono">
+                  8.00
+                </td>
+                
+                <td class="mono">
+                  51.25
+                </td>
+                
+                <td class="mono">
+                  8.73
+                </td>
+                
+                <td class="mono">
+                  17.03
+                </td>
+                
+                <td class="mono">
+                  50.61
+                </td>
+                
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANOVA Source Table -->
+      <div class="subsection">
+        <div class="subsection-title">Analysis of Variance (Log-Transformed Values)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th class="right">df</th>
+                <th class="right">SS</th>
+                <th class="right">MS</th>
+                <th class="right">F</th>
+                <th class="right">p-value</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Sequence
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.28066</td>
+                <td class="mono">0.28066</td>
+                <td class="mono">13.074</td>
+                <td class="mono">0.0112</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Subject(Sequence)
+                </td>
+                <td class="mono">6</td>
+                <td class="mono">0.12880</td>
+                <td class="mono">0.02147</td>
+                <td class="mono">61.896</td>
+                <td class="mono">&lt;0.001</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Period
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.000005</td>
+                <td class="mono">0.000005</td>
+                <td class="mono">0.014</td>
+                <td class="mono">0.9093</td>
+              </tr>
+              
+              
+              <tr style="background:var(--blue-50);">
+                <td class="anova-source highlight">
+                  Treatment
+                </td>
+                <td class="mono">1</td>
+                <td class="mono">0.000170</td>
+                <td class="mono">0.000170</td>
+                <td class="mono">0.490</td>
+                <td class="mono">0.5102</td>
+              </tr>
+              
+              
+              <tr >
+                <td class="anova-source ">
+                  Residual
+                </td>
+                <td class="mono">6</td>
+                <td class="mono">0.00208</td>
+                <td class="mono">0.000347</td>
+                <td class="mono">—</td>
+                <td class="mono">—</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;padding-left:2px;">
+          Sequence F-ratio tested against Subject(Sequence) MS (split-plot structure).
+          Period and Treatment F-ratios tested against Residual MS.
+        </div>
+      </div>
+
+      <!-- Diagnostics -->
+      <div class="subsection">
+        <div class="subsection-title">Diagnostics</div>
+        <div class="diag-grid">
+          <div class="diag-card">
+            <div class="diag-card-label">Residual df</div>
+            <div class="diag-card-value">6</div>
+            <div class="diag-card-sub">Within-subject error degrees of freedom</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Residual MS</div>
+            <div class="diag-card-value mono" style="font-size:13px;">0.000347</div>
+            <div class="diag-card-sub">Within-subject mean square (σ² estimate)</div>
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Shapiro-Wilk p</div>
+            
+            <div class="diag-card-value" style="color:var(--green-600);">
+              0.2167
+            </div>
+            <div class="diag-card-sub">Residual normality test — no evidence against normality</div>
+            
+          </div>
+          <div class="diag-card">
+            <div class="diag-card-label">Potential Outliers</div>
+            <div class="diag-card-value" style="color:var(--green-600);">
+              0
+            </div>
+            <div class="diag-card-sub">Residuals with |z| &gt; 3.0</div>
+          </div>
+        </div>
+        
+      </div>
+
+    </div><!-- /param-body -->
+  </div><!-- /param-section -->
+  
+
+  <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+  <footer class="report-footer">
+    <div class="footer-reg">
+      <strong>Regulatory Basis:</strong> FDA 2001 / EMA 2010 standard average bioequivalence<br>
+      90% confidence interval on the geometric mean ratio (Test/Reference)
+      must lie within 80.0–125.0%
+      for bioequivalence to be concluded per FDA 2001 guidance and EMA/CPMP/EWP/QWP/1401/98 Rev.1 (2010).
+    </div>
+    <div class="footer-info">
+      <div class="footer-version">BioEqPy v0.1.0</div>
+      <div>Generated 2026-05-20 12:41:03 UTC</div>
+      <div style="margin-top:4px;color:#CBD5E1;">
+        This report is for informational purposes only.<br>
+        Regulatory submission requires validated software and full audit trail.
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
