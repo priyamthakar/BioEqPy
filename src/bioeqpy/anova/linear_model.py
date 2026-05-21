@@ -14,12 +14,14 @@ def fit_anova(study: BEStudy) -> ANOVAResult:
     """Fit the appropriate ANOVA model for a study."""
     if study.design.name == "2x2":
         return fit_2x2_anova(study)
+    elif study.design.name == "2x2x3":
+        return fit_2x2x3_anova(study)
     elif study.design.name == "2x2x4":
         return fit_2x2x4_anova(study)
     else:
         raise NotImplementedError(
             f"ANOVA is not yet implemented for design '{study.design.name}'. "
-            "Supported designs: 2x2, 2x2x4."
+            "Supported designs: 2x2, 2x2x3, 2x2x4."
         )
 
 
@@ -161,6 +163,71 @@ def fit_2x2x4_anova(study: BEStudy) -> ANOVAResult:
     )
 
 
+def fit_2x2x3_anova(study: BEStudy) -> ANOVAResult:
+    """Fit ANOVA for 2x2x3 partial replicate crossover (TRR/RTR/RRT).
+
+    Treatment difference and SE come from a full OLS fixed-effects model
+    (subject + period + treatment dummies). sWR is estimated from the two
+    within-subject R replicates each subject provides; sWT is not estimable.
+    Sequential (Type I) SS are used for the source table so that all rows
+    partition SS_total exactly.
+    """
+    from bioeqpy.designs.replicate_2x2x3 import validate_2x2x3_completeness
+    from bioeqpy.anova.replicate import estimate_within_subject_variances
+
+    frame = validate_2x2x3_completeness(study)
+
+    # sWR only – every subject has 2 R obs; T appears once so sWT is not estimable
+    sWR, _, _, _ = estimate_within_subject_variances(study)
+
+    # Full OLS: y ~ subject + period + treatment (fixed effects)
+    design_mat = pd.get_dummies(
+        frame[["subject", "period", "treatment"]].astype(str),
+        columns=["subject", "period", "treatment"],
+        drop_first=True,
+        dtype=float,
+    )
+    design_mat.insert(0, "intercept", 1.0)
+    x = design_mat.to_numpy(dtype=float)
+    y = frame["value"].to_numpy(dtype=float)
+    beta, _, _, _ = np.linalg.lstsq(x, y, rcond=None)
+
+    raw_residuals = y - x @ beta
+    n_obs = len(y)
+    rank = x.shape[1]           # 1 + (n-1) + 2 + 1 = n + 3
+    residual_df = float(n_obs - rank)   # 2n - 3
+    sse_full = float(np.sum(raw_residuals ** 2))
+    residual_ms = sse_full / residual_df
+
+    # Extract treatment_T coefficient (R is the dropped baseline)
+    col_names = list(design_mat.columns)
+    treatment_col = next(c for c in col_names if c.startswith("treatment_"))
+    t_idx = col_names.index(treatment_col)
+
+    xtx_inv = np.linalg.inv(x.T @ x)
+    treatment_diff = float(beta[t_idx])
+    se_diff = float(np.sqrt(residual_ms * xtx_inv[t_idx, t_idx]))
+
+    fitted = pd.Series(x @ beta, index=frame.index, name="fitted")
+    residuals = pd.Series(raw_residuals, index=frame.index, name="residual")
+
+    source_table = _build_3period_source_table(
+        frame, sse_full, residual_ms, residual_df, treatment_diff, se_diff
+    )
+
+    return ANOVAResult(
+        source_table=source_table,
+        residual_ms=residual_ms,
+        residual_df=residual_df,
+        treatment_diff=treatment_diff,
+        se_diff=se_diff,
+        residuals=residuals,
+        fitted=fitted,
+        swr=sWR,
+        swt=None,
+    )
+
+
 def _compute_between_subject_ss(frame: pd.DataFrame) -> tuple[float, float, int, int]:
     """Compute Sequence and Subject(Sequence) SS via between-subject decomposition.
 
@@ -208,6 +275,116 @@ def _effect_pvalue(effect: float, se: float, df: float) -> float:
         return 1.0
     f_value = (effect / se) ** 2
     return float(stats.f.sf(f_value, 1, df))
+
+
+def _build_3period_source_table(
+    frame: pd.DataFrame,
+    sse_full: float,
+    residual_ms: float,
+    residual_df: float,
+    treatment_diff: float,
+    se_diff: float,
+) -> pd.DataFrame:
+    """Build the ANOVA source table for a 3-period partial replicate crossover.
+
+    Uses sequential (Type I) SS so all rows partition SS_total exactly.
+    Between-subject effects use the closed-form marginal formulas; within-subject
+    period and treatment SS are computed as successive SSE differences.
+    """
+    y = frame["value"].to_numpy(dtype=float)
+
+    # --- Between-subject effects ---
+    ss_seq, ss_sub_seq, df_seq, df_sub_seq = _compute_between_subject_ss(frame)
+    ms_seq = ss_seq / df_seq if df_seq > 0 else np.nan
+    ms_sub_seq = ss_sub_seq / df_sub_seq if df_sub_seq > 0 else np.nan
+
+    if not np.isnan(ms_sub_seq) and ms_sub_seq > 0:
+        f_seq = float(ms_seq / ms_sub_seq)
+        p_seq = float(stats.f.sf(f_seq, df_seq, df_sub_seq))
+    else:
+        f_seq, p_seq = np.nan, np.nan
+
+    if not np.isnan(ms_sub_seq) and residual_ms > 0:
+        f_sub_seq = float(ms_sub_seq / residual_ms)
+        p_sub_seq = float(stats.f.sf(f_sub_seq, df_sub_seq, residual_df))
+    else:
+        f_sub_seq, p_sub_seq = np.nan, np.nan
+
+    # --- Sequential within-subject SS ---
+    # SSE from subject-only model gives SS_within_subjects
+    subj_mat = pd.get_dummies(
+        frame[["subject"]].astype(str), columns=["subject"], drop_first=True, dtype=float
+    )
+    subj_mat.insert(0, "intercept", 1.0)
+    x_subj = subj_mat.to_numpy(dtype=float)
+    b_subj, _, _, _ = np.linalg.lstsq(x_subj, y, rcond=None)
+    sse_subj = float(np.sum((y - x_subj @ b_subj) ** 2))
+
+    # SSE from subject + period model
+    period_mat = pd.get_dummies(
+        frame[["period"]].astype(str), columns=["period"], drop_first=True, dtype=float
+    )
+    x_sp = np.hstack([x_subj, period_mat.to_numpy(dtype=float)])
+    b_sp, _, _, _ = np.linalg.lstsq(x_sp, y, rcond=None)
+    sse_subj_period = float(np.sum((y - x_sp @ b_sp) ** 2))
+
+    ss_period = sse_subj - sse_subj_period          # sequential period SS
+    ss_treatment = sse_subj_period - sse_full        # sequential treatment SS
+    df_period = 2                                    # 3 periods - 1
+
+    ms_period = ss_period / df_period if df_period > 0 else np.nan
+    f_period = float(ms_period / residual_ms) if (residual_ms > 0 and not np.isnan(ms_period)) else np.nan
+    p_period = float(stats.f.sf(f_period, df_period, residual_df)) if not np.isnan(f_period) else np.nan
+
+    ms_treatment = ss_treatment  # df = 1
+    treatment_f = float(ms_treatment / residual_ms) if residual_ms > 0 else 0.0
+    treatment_p = float(stats.f.sf(treatment_f, 1, residual_df)) if residual_ms > 0 else 1.0
+
+    residual_ss = residual_ms * residual_df
+
+    rows = [
+        {
+            "Source": "Sequence",
+            "DF": df_seq,
+            "SS": ss_seq,
+            "MS": ms_seq,
+            "F": f_seq,
+            "p-value": p_seq,
+        },
+        {
+            "Source": "Subject within Sequence",
+            "DF": df_sub_seq,
+            "SS": ss_sub_seq,
+            "MS": ms_sub_seq,
+            "F": f_sub_seq,
+            "p-value": p_sub_seq,
+        },
+        {
+            "Source": "Period",
+            "DF": df_period,
+            "SS": ss_period,
+            "MS": ms_period,
+            "F": f_period,
+            "p-value": p_period,
+        },
+        {
+            "Source": "Treatment",
+            "DF": 1,
+            "SS": ss_treatment,
+            "MS": ms_treatment,
+            "F": treatment_f,
+            "p-value": treatment_p,
+        },
+        {
+            "Source": "Residual",
+            "DF": residual_df,
+            "SS": residual_ss,
+            "MS": residual_ms,
+            "F": np.nan,
+            "p-value": np.nan,
+        },
+    ]
+    return pd.DataFrame(rows)
 
 
 def _build_source_table(
